@@ -14,7 +14,7 @@ jobs:
         image: docker:20.10-dind
         options: --privileged
         ports:
-          - 8080:8000
+          - 5000:8000
 
     steps:
     - name: Checkout code
@@ -42,7 +42,7 @@ jobs:
         echo "services:" >> docker-compose.override.yml
         echo "  qa-server:" >> docker-compose.override.yml
         echo "    ports:" >> docker-compose.override.yml
-        echo "      - \"8080:8000\"" >> docker-compose.override.yml
+        echo "      - \"5000:8000\"" >> docker-compose.override.yml
 
     - name: Build and start Docker container
       run: |
