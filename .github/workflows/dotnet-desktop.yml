@@ -1,41 +1,3 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
-# This workflow will build, test, sign and package a WPF or Windows Forms desktop application
-# built on .NET Core.
-# To learn how to migrate your existing application to .NET Core,
-# refer to https://docs.microsoft.com/en-us/dotnet/desktop-wpf/migration/convert-project-from-net-framework
-#
-# To configure this workflow:
-#
-# 1. Configure environment variables
-# GitHub sets default environment variables for every workflow run.
-# Replace the variables relative to your project in the "env" section below.
-#
-# 2. Signing
-# Generate a signing certificate in the Windows Application
-# Packaging Project or add an existing signing certificate to the project.
-# Next, use PowerShell to encode the .pfx file using Base64 encoding
-# by running the following Powershell script to generate the output string:
-#
-# $pfx_cert = Get-Content '.\SigningCertificate.pfx' -Encoding Byte
-# [System.Convert]::ToBase64String($pfx_cert) | Out-File 'SigningCertificate_Encoded.txt'
-#
-# Open the output file, SigningCertificate_Encoded.txt, and copy the
-# string inside. Then, add the string to the repo as a GitHub secret
-# and name it "Base64_Encoded_Pfx."
-# For more information on how to configure your signing certificate for
-# this workflow, refer to https://github.com/microsoft/github-actions-for-desktop-apps#signing
-#
-# Finally, add the signing certificate password to the repo as a secret and name it "Pfx_Key".
-# See "Build the Windows Application Packaging project" below to see how the secret is used.
-#
-# For more information on GitHub Actions, refer to https://github.com/features/actions
-# For a complete CI/CD sample to get started with GitHub Action workflows for Desktop Applications,
-# refer to https://github.com/microsoft/github-actions-for-desktop-apps
-
 name: .NET Core Desktop
 
 on:
@@ -52,20 +14,45 @@ jobs:
       matrix:
         configuration: [Debug, Release]
 
-    runs-on: windows-latest  # For a list of available runner types, refer to
-                             # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
+    runs-on: windows-latest  
 
     env:
-      Solution_Name: OpenInnovation_QA_Challenge.sln                        # Replace with your solution name, i.e. MyWpfApp.sln.
-      Test_Project_Path: OpenInnovation_QA_Challenge.csproj              # Replace with the path to your test project, i.e. MyWpfApp.Tests\MyWpfApp.Tests.csproj.
-      #Wap_Project_Directory: your-wap-project-directory-name    # Replace with the Wap project directory relative to the solution, i.e. MyWpfApp.Package.
-      #Wap_Project_Path: your-wap-project-path                   # Replace with the path to your Wap project, i.e. MyWpf.App.Package\MyWpfApp.Package.wapproj.
+      Solution_Name: OpenInnovation_QA_Challenge.sln                        
+      Test_Project_Path: OpenInnovation_QA_Challenge.csproj    
+      Docker_Image_Name: Dockerfile
+      Python_API_Repo: https://github.com/openinnovationai/recruiting-qa-challenge
 
     steps:
     - name: Checkout
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+
+    - name: Checkout Python API repo
+      uses: actions/checkout@v4
+      with:
+        repository: openinnovationai/recruiting-qa-challenge  # Public repo
+        path: python-api
+
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v2
+
+    - name: Build Docker image for Python API
+      run: |
+        cd python-api
+        docker build -t ${{ env.Docker_Image_Name }} .
+
+    - name: Run Python API server in Docker
+      run: |
+        docker run -d -p 8000:8000 ${{ env.Docker_Image_Name }}  # Adjust port if necessary
+
+    - name: Wait for API server to be ready
+      run: |
+        for i in {1..30}; do \
+          curl -s http://localhost:8000/health && exit 0; \
+          sleep 10; \
+        done
+      # Adjust the health check endpoint and timeout as needed
 
     # Install the .NET Core workload
     - name: Install .NET Core
@@ -91,5 +78,8 @@ jobs:
       with:
         name: Test Results
         path: ./OpenInnovation_QA_Challenge/TestResults/test_results.trx
+
+    - name: Stop Python API server
+      run: docker ps -q --filter "ancestor=${{ env.Docker_Image_Name }}" | xargs docker stop
 
    
