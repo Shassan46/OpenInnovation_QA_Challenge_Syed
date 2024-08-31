@@ -76,6 +76,12 @@ jobs:
         dotnet build --configuration Release
         dotnet test --configuration Release --logger:trx
 
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: '**/*.trx'   
+
     - name: Stop and remove Docker container
       run: |
         cd recruiting-qa-challenge
