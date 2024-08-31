@@ -82,26 +82,14 @@ jobs:
       with:
         name: test-results
         path: '**/*.trx'
-
-    - name: Convert TRX to HTML Report
-      if: always()
-      run: |
-        dotnet tool install --global trx2html
-        trx2html -i TestResults/*.trx -o TestResults/report.html
-
-    - name: Upload HTML Test Report
-      uses: actions/upload-artifact@v3
-      if: always()
+     
+    - name: Publish test results
+      uses: dorny/test-reporter@v1
+      if: always()  # Run this step even if previous steps fail
       with:
-        name: html-test-report
-        path: TestResults/report.html
-        
-    - name: Publish Test Results
-      uses: EnricoMi/publish-unit-test-result-action@v2
-      if: always()
-      with:
-       files: |
-        test-results/**/*.trx  
+        name: 'Test Results'
+        path: '**/*.trx'  # Path to your test results
+        reporter: dotnet-trx  # Specify the format of the test results
 
     - name: Stop and remove Docker container
       run: |
