@@ -61,7 +61,7 @@ jobs:
       run: |
         dotnet restore
         dotnet build --configuration Release
-        dotnet test --configuration Release --logger:trx
+        dotnet test --configuration Release --logger:trx --results-directory ./test-results
       continue-on-error: true  
      
     - name: Publish test results
@@ -71,6 +71,12 @@ jobs:
         name: 'Test Results'
         path: '**/*.trx' 
         reporter: dotnet-trx  
+
+    - name: Collect test logs
+      run: |
+        mkdir -p test-logs
+        cp -r $(find . -name "*.log") test-logs/
+      if: always()    
 
     - name: Stop and remove Docker container
       run: |
