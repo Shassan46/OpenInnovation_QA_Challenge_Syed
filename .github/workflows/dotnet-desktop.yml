@@ -84,12 +84,14 @@ jobs:
         path: '**/*.trx'
 
     - name: Convert TRX to HTML Report
+      if: always()
       run: |
         dotnet tool install --global trx2html
         trx2html -i TestResults/*.trx -o TestResults/report.html
 
     - name: Upload HTML Test Report
       uses: actions/upload-artifact@v3
+      if: always()
       with:
         name: html-test-report
         path: TestResults/report.html
