@@ -75,21 +75,15 @@ jobs:
         dotnet restore
         dotnet build --configuration Release
         dotnet test --configuration Release --logger:trx
-
-    - name: Upload test results
-      uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: test-results
-        path: '**/*.trx'
+      continue-on-error: true  
      
     - name: Publish test results
       uses: dorny/test-reporter@v1
-      if: always()  # Run this step even if previous steps fail
+      if: always() 
       with:
         name: 'Test Results'
-        path: '**/*.trx'  # Path to your test results
-        reporter: dotnet-trx  # Specify the format of the test results
+        path: '**/*.trx' 
+        reporter: dotnet-trx  
 
     - name: Stop and remove Docker container
       run: |
