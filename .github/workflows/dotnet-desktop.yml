@@ -20,6 +20,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
+    - name: Free up port 8000
+      run: |
+        sudo fuser -k 8000/tcp  
+
     - name: Preemptive Disk Cleanup
       run: |
         docker system prune -af --volumes
