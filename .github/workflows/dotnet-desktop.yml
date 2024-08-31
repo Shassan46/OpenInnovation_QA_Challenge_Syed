@@ -70,13 +70,7 @@ jobs:
       with:
         name: 'Test Results'
         path: '**/*.trx' 
-        reporter: dotnet-trx  
-
-    - name: Collect test logs
-      run: |
-        mkdir -p test-logs
-        cp -r $(find . -name "*.log") test-logs/
-      if: always()    
+        reporter: dotnet-trx      
 
     - name: Stop and remove Docker container
       run: |
