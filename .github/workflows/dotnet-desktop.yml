@@ -14,7 +14,7 @@ jobs:
         image: docker:20.10-dind
         options: --privileged
         ports:
-          - 5000:8000
+          - 8001:8000
 
     steps:
     - name: Checkout code
@@ -38,7 +38,7 @@ jobs:
         
     - name: Check port availability
       run: |
-        sudo netstat -tuln | grep '5000' || echo "Port 5000 is free"
+        sudo netstat -tuln | grep '8001' || echo "Port 8001 is free"
         sudo netstat -tuln | grep '8001' || echo "Port 8001 is free"
     
     - name: Create Docker Compose Override File
@@ -47,7 +47,7 @@ jobs:
         echo "services:" >> docker-compose.override.yml
         echo "  qa-server:" >> docker-compose.override.yml
         echo "    ports:" >> docker-compose.override.yml
-        echo "      - \"5000:8000\"" >> docker-compose.override.yml
+        echo "      - \"8001:8000\"" >> docker-compose.override.yml
 
     - name: Build and start Docker container
       run: |
