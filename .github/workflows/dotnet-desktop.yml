@@ -1,4 +1,4 @@
-name: QA Test API
+name: .NET Core Desktop
 
 on:
   push:
