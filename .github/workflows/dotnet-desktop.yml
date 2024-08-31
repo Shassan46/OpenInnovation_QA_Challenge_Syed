@@ -14,7 +14,7 @@ jobs:
         image: docker:20.10-dind
         options: --privileged
         ports:
-          - 8002:8000
+          - 8000:8000
 
     steps:
     - name: Checkout code
@@ -50,7 +50,7 @@ jobs:
         echo "services:" >> docker-compose.override.yml
         echo "  qa-server:" >> docker-compose.override.yml
         echo "    ports:" >> docker-compose.override.yml
-        echo "      - \"8002:8000\"" >> docker-compose.override.yml
+        echo "      - \"8000:8000\"" >> docker-compose.override.yml
 
     - name: Display Docker Compose Files
       run: |
@@ -75,7 +75,7 @@ jobs:
         dotnet restore
         dotnet build --configuration Release
         dotnet test --configuration Release --logger:trx
-      continue-on-error: true  
+      continue-on-error: false  
      
     - name: Publish test results
       uses: dorny/test-reporter@v1
