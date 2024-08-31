@@ -1,78 +1,52 @@
-name: .NET Core Desktop
+name: Test API
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    branches:
+      - main  # Adjust to the branch you want to trigger this workflow
 
 jobs:
-
-  build:
-
-    strategy:
-      matrix:
-        configuration: [Debug, Release]
-
+  test-api:
     runs-on: ubuntu-latest
-
     services:
       docker:
         image: docker:20.10-dind
         options: --privileged
+        ports:
+          - 8000:8000
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-    - name: Set up Docker
+    - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
 
-    - name: Set up Docker
-      uses: docker/setup-docker@v1
-
-    - name: Start API server
+    - name: Build and start Docker container
       run: |
         echo "version: '3.8'
         services:
-          api-server:
-            image: https://github.com/openinnovationai/recruiting-qa-challenge/blob/main/Dockerfile:tag  
+          qa-server:
+            image: ghcr.io/openinnovationai/recruiting-qa-challenge:latest
+            container_name: qa-server
             ports:
-              - '8080:8080'" > docker-compose.yml
+              - 8000:8000
+        " > docker-compose.yml
         docker-compose up -d
-      # Wait for the server to be fully up before running tests
-      timeout-minutes: 1
 
-    - name: Wait for server to be ready
+    - name: Wait for the server to start
+      run: sleep 30  # Adjust based on how long the server needs to start
+
+    - name: Set up .NET 8
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.x'
+
+    - name: Restore, build, and test
       run: |
-        echo "Waiting for API server to start..."
-        sleep 30
+        dotnet restore
+        dotnet build --configuration Release
+        dotnet test --configuration Release --logger:trx
 
-    # Install the .NET Core workload
-    - name: Install .NET Core
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.x
-
-    - name: Restore .NET dependencies
-      run: dotnet restore OpenInnovation_QA_Challenge_Syed/OpenInnovation_QA_Challenge.csproj
-
-    - name: Run unit tests
-      run: dotnet test OpenInnovation_QA_Challenge_Syed/OpenInnovation_QA_Challenge.csproj --configuration Debug --no-build --verbosity normal --logger "trx;LogFileName=test_results.trx"
-
-    - name: Stop and remove Docker containers
+    - name: Stop and remove Docker container
       run: docker-compose down
-
-    - name: Upload test results
-      uses: actions/upload-artifact@v3
-      with:
-        name: test-results
-        path: test_results.trx
-   
-    - name: Upload Docker Compose configuration
-      uses: actions/upload-artifact@v3
-      with:
-        name: docker-compose
-        path: docker-compose.yml
