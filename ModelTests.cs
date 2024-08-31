@@ -28,7 +28,7 @@ namespace OpenInnovation_QA_Challenge
         [SetUp]
         public void Setup()
         {
-            _client = new RestClient("http://localhost:8000"); // Replace with actual API URL
+            _client = new RestClient("http://localhost:8002"); // Replace with actual API URL
         }
 
         // 1. Add Model and Save ID
