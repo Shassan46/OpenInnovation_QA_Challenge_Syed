@@ -14,7 +14,7 @@ jobs:
         image: docker:20.10-dind
         options: --privileged
         ports:
-          - 8000:8000
+          - 8080:8000
 
     steps:
     - name: Checkout code
@@ -39,7 +39,6 @@ jobs:
     - name: Create Docker Compose Override File
       run: |
         cd recruiting-qa-challenge
-        echo "version: '3'" > docker-compose.override.yml
         echo "services:" >> docker-compose.override.yml
         echo "  qa-server:" >> docker-compose.override.yml
         echo "    ports:" >> docker-compose.override.yml
