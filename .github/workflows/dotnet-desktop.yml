@@ -23,6 +23,11 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
 
+    - name: Clone the public repository with Docker setup
+      run: |
+        git clone https://github.com/openinnovationai/recruiting-qa-challenge.git
+        cd recruiting-qa-challenge
+
     - name: Install Docker Compose
       run: |
         sudo curl -L "https://github.com/docker/compose/releases/download/$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep tag_name | cut -d '"' -f 4)/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
@@ -30,14 +35,7 @@ jobs:
 
     - name: Build and start Docker container
       run: |
-        echo "version: '3.8'
-        services:
-          qa-server:
-            image: ghcr.io/openinnovationai/recruiting-qa-challenge:latest
-            container_name: qa-server
-            ports:
-              - 8000:8000
-        " > docker-compose.yml
+        cd recruiting-qa-challenge
         docker-compose up -d
 
     - name: Wait for the server to start
