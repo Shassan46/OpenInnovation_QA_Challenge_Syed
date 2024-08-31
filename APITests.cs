@@ -14,7 +14,7 @@ namespace OpenInnovation_QA_Challenge
         [SetUp]
         public void Setup()
         {
-            _client = new RestClient("http://localhost:8002");
+            _client = new RestClient("http://localhost:8000");
         }
        
         [Test, Order(1)]
