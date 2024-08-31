@@ -20,8 +20,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+    - name: Preemptive Disk Cleanup
+      run: |
+        docker system prune -af --volumes
+        sudo rm -rf /var/lib/docker/tmp/*
+        sudo rm -rf /root/.cache/*
 
     - name: Clone the public repository with Docker setup
       run: |
