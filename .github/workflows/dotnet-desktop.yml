@@ -14,13 +14,12 @@ jobs:
       matrix:
         configuration: [Debug, Release]
 
-    runs-on: windows-latest  
+    runs-on: ubuntu-latest
 
-    env:
-      Solution_Name: OpenInnovation_QA_Challenge.sln                        
-      Test_Project_Path: OpenInnovation_QA_Challenge.csproj    
-      Docker_Image_Name: Dockerfile
-      Python_API_Repo: https://github.com/openinnovationai/recruiting-qa-challenge
+    services:
+      docker:
+        image: docker:20.10-dind
+        options: --privileged
 
     steps:
     - name: Checkout
@@ -28,31 +27,30 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Checkout Python API repo
-      uses: actions/checkout@v4
-      with:
-        repository: openinnovationai/recruiting-qa-challenge  # Public repo
-        path: python-api
-
     - name: Set up Docker
       uses: docker/setup-buildx-action@v2
 
-    - name: Build Docker image for Python API
-      run: |
-        cd python-api
-        docker build -t ${{ env.Docker_Image_Name }} .
+    - name: Set up Docker Compose
+      uses: docker/compose-action@v2
+      with:
+        version: 2.15.1
 
-    - name: Run Python API server in Docker
+    - name: Start API server
       run: |
-        docker run -d -p 8000:8000 ${{ env.Docker_Image_Name }}  # Adjust port if necessary
+        echo "version: '3.8'
+        services:
+          api-server:
+            image: https://github.com/openinnovationai/recruiting-qa-challenge/blob/main/Dockerfile:tag  
+            ports:
+              - '8080:8080'" > docker-compose.yml
+        docker-compose up -d
+      # Wait for the server to be fully up before running tests
+      timeout-minutes: 1
 
-    - name: Wait for API server to be ready
+    - name: Wait for server to be ready
       run: |
-        for i in {1..30}; do \
-          curl -s http://localhost:8000/health && exit 0; \
-          sleep 10; \
-        done
-      # Adjust the health check endpoint and timeout as needed
+        echo "Waiting for API server to start..."
+        sleep 30
 
     # Install the .NET Core workload
     - name: Install .NET Core
@@ -60,26 +58,23 @@ jobs:
       with:
         dotnet-version: 8.0.x
 
-    # Restore dependencies
-    - name: Restore dependencies
-      run: dotnet restore ${{ env.Solution_Name }}
-      
-    # Build the solution
-    - name: Build the solution
-      run: dotnet build ${{ env.Solution_Name }} --configuration ${{ matrix.configuration }} --no-restore
+    - name: Restore .NET dependencies
+      run: dotnet restore OpenInnovation_QA_Challenge_Syed/OpenInnovation_QA_Challenge.csproj
 
-    # Execute all unit tests in the test project
-    - name: Execute unit tests
-      run: dotnet test ${{ env.Test_Project_Path }} --configuration ${{ matrix.configuration }} --no-build --verbosity normal --logger "trx;LogFileName=test_results.trx"
+    - name: Run unit tests
+      run: dotnet test OpenInnovation_QA_Challenge_Syed/OpenInnovation_QA_Challenge.csproj --configuration Debug --no-build --verbosity normal --logger "trx;LogFileName=test_results.trx"
 
-    # Publish test results (if needed)
-    - name: Publish Test Results
+    - name: Stop and remove Docker containers
+      run: docker-compose down
+
+    - name: Upload test results
       uses: actions/upload-artifact@v3
       with:
-        name: Test Results
-        path: ./OpenInnovation_QA_Challenge/TestResults/test_results.trx
-
-    - name: Stop Python API server
-      run: docker ps -q --filter "ancestor=${{ env.Docker_Image_Name }}" | xargs docker stop
-
+        name: test-results
+        path: test_results.trx
    
+    - name: Upload Docker Compose configuration
+      uses: actions/upload-artifact@v3
+      with:
+        name: docker-compose
+        path: docker-compose.yml
