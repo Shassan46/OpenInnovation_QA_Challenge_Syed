@@ -1,0 +1,52 @@
+name: Test API
+
+on:
+  push:
+    branches:
+      - main  # Adjust to the branch you want to trigger this workflow
+
+jobs:
+  test-api:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:20.10-dind
+        options: --privileged
+        ports:
+          - 8000:8000
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Build and start Docker container
+      run: |
+        echo "version: '3.8'
+        services:
+          qa-server:
+            image: ghcr.io/openinnovationai/recruiting-qa-challenge:latest
+            container_name: qa-server
+            ports:
+              - 8000:8000
+        " > docker-compose.yml
+        docker-compose up -d
+
+    - name: Wait for the server to start
+      run: sleep 30  # Adjust based on how long the server needs to start
+
+    - name: Set up .NET 8
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.x'
+
+    - name: Restore, build, and test
+      run: |
+        dotnet restore
+        dotnet build --configuration Release
+        dotnet test --configuration Release --logger:trx
+
+    - name: Stop and remove Docker container
+      run: docker-compose down
