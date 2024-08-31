@@ -64,4 +64,11 @@ jobs:
         dotnet test --configuration Release --logger:trx
 
     - name: Stop and remove Docker container
-      run: docker-compose down
+      run: |
+        cd recruiting-qa-challenge
+        docker-compose -f docker-compose.yml -f docker-compose.override.yml down
+
+    - name: Cleanup Docker to free up space
+      run: |
+        docker system prune -f
+        docker volume prune -f
