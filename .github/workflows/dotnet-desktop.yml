@@ -2,8 +2,9 @@ name: .NET Core Desktop
 
 on:
   push:
-    branches:
-      - main  # Adjust to the branch you want to trigger this workflow
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
 
 jobs:
   test-api:
