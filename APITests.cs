@@ -131,7 +131,7 @@ namespace OpenInnovation_QA_Challenge
         }
 
         [Test, Order(6)]
-        public async Task Model_POST_ShouldFail_WhenOwnerIsMissing()
+        public async Task Model_POST_ShouldFail_WhenOwnerFieldIsEmpty()
         {
             //Arrange
             var request = new RestRequest("/models");
