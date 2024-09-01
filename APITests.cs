@@ -1,25 +1,11 @@
-﻿using Newtonsoft.Json;
-using NUnit.Framework;
-using OpenInnovation_QA_Challenge.Models;
+﻿using OpenInnovation_QA_Challenge.Models;
 using RestSharp;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.Diagnostics.Metrics;
-using System.Drawing;
-using System.Linq;
 using System.Net;
-using System.Reflection.Metadata;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.Xml.Linq;
 
 namespace OpenInnovation_QA_Challenge
 {
     [TestFixture]
-    public class ModelTests
+    public class APITests
     {
         private RestClient _client;
         private string? _modelId;
@@ -28,19 +14,22 @@ namespace OpenInnovation_QA_Challenge
         [SetUp]
         public void Setup()
         {
-            _client = new RestClient("http://localhost:8002"); // Replace with actual API URL
+            _client = new RestClient("http://localhost:8000");
         }
-
-        // 1. Add Model and Save ID
+       
         [Test, Order(1)]
-        public async Task AddModel_ShouldReturnSuccessAndSaveId()
+        public async Task Models_POST_ShouldReturnSuccess()
         {
+            //Arrange
             var request = new RestRequest("models");
             var modelAdd = new { Name = "My Model123", Owner = "john123" };
+
             request.AddJsonBody(modelAdd);
 
+            //Act
             var response = await _client.ExecutePostAsync<Model>(request);
 
+            //Assert
             Assert.Multiple(() =>
             {
                 Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), response.ErrorMessage);
@@ -49,45 +38,47 @@ namespace OpenInnovation_QA_Challenge
                 Assert.That(response.Data.Name, Is.EqualTo("My Model123"));
                 Assert.That(response.Data.Owner, Is.EqualTo("john123"));
 
-                // Save the model ID for later use
                 _modelId = response.Data.Id;
+
                 Assert.That(_modelId, Is.Not.Null.And.Not.Empty, "Model ID should not be null or empty.");
             });
             
         }
 
-        // 2. Get Models
         [Test, Order(2)]
-        public async Task GetModels_ShouldReturnSuccess()
+        public async Task Models_GET_ShouldReturnSuccess()
         {
+            //Arrange
             var request = new RestRequest("/models");
 
+            //Act
             var response = await _client.ExecuteGetAsync(request);
 
+            //Assert
             Assert.Multiple(() =>
             {
                 Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), response.ErrorMessage);
-
                 Assert.That(response.Content, Is.Not.Null.And.Not.Empty);
             });
         }
 
-        // 3. Add Model Version and Save Version ID
         [Test, Order(3)]
-        public async Task AddModelVersion_ShouldReturnSuccessAndSaveVersionId()
+        public async Task Versions_POST_ShouldReturnSuccess()
         {
-            // Ensure _modelId is not null
-            Assert.That(_modelId, Is.Not.Null.And.Not.Empty, "Model ID is null or empty. Ensure that AddModel test runs first.");
-
+            //Arrange
             var request = new RestRequest($"models/{_modelId}/versions");
-            var versionAdd = new             {
+            var versionAdd = new
+            {
                 name = "Version 1 - Tiny Llama",
                 hugging_face_model = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
             };
+
             request.AddJsonBody(versionAdd);
 
+            //Act
             var response = await _client.ExecutePostAsync<ModelVersion>(request);
 
+            //Assert
             Assert.Multiple(() =>
             {
                 Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), response.ErrorMessage);
@@ -95,25 +86,24 @@ namespace OpenInnovation_QA_Challenge
 
                 Assert.That(response.Data.Name, Is.EqualTo("Version 1 - Tiny Llama"));
 
-                // Save the version ID for later use
                 _versionId = response.Data.Id;
+
                 Assert.That(_versionId, Is.Not.Null.And.Not.Empty, "Version ID should not be null or empty.");
             });
 
             
         }
 
-        // 4. Get Model Versions Using Saved Model ID
         [Test, Order(4)]
-        public async Task GetModelVersions_ShouldReturnSuccessUsingSavedId()
+        public async Task Versions_GET_ShouldReturnSuccess()
         {
-            // Ensure _modelId is not null
-            Assert.That(_modelId, Is.Not.Null.And.Not.Empty, "Model ID is null or empty. Ensure that AddModel test runs first.");
-
+            //Arrange
             var request = new RestRequest($"/models/{_modelId}/versions");
 
+            //Act
             var response = await _client.ExecuteGetAsync(request);
 
+            //Assert
             Assert.Multiple(() =>
             {
                 Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
@@ -121,23 +111,18 @@ namespace OpenInnovation_QA_Challenge
             });
         }
 
-        // 5. Perform Inference Using Saved IDs
         [Test, Order(5)]
-        public async Task PerformInference_ShouldReturnSuccessUsingSavedIds()
+        public async Task Inference_POST_ShouldReturnSuccess()
         {
-            Assert.Multiple(() =>
-            {
-                // Ensure _modelId and _versionId are not null
-                Assert.That(_modelId, Is.Not.Null.And.Not.Empty, "Model ID is null or empty. Ensure that AddModel test runs first.");
-                Assert.That(_versionId, Is.Not.Null.And.Not.Empty, "Version ID is null or empty. Ensure that AddModelVersion test runs first.");
-            });
-
+            //Arrange
             var request = new RestRequest($"/models/{_modelId}/versions/{_versionId}/infer", Method.Post);
             var inferenceArgs = new InferenceArguments { Text = "Hi, how are you?" };
             request.AddJsonBody(inferenceArgs);
 
+            //Act
             var response = await _client.ExecuteAsync(request);
 
+            //Assert
             Assert.Multiple(() =>
             {
                 Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), response.ErrorMessage);
@@ -145,50 +130,44 @@ namespace OpenInnovation_QA_Challenge
             });
         }
 
-        // 6. Negative Test: Add Model with Missing Owner
         [Test, Order(6)]
-        public async Task AddModel_ShouldFail_WhenOwnerIsMissing()
+        public async Task Model_POST_ShouldFail_WhenOwnerIsMissing()
         {
+            //Arrange
             var request = new RestRequest("/models");
-            
-            // Missing owner
-            var modelAdd = new ModelAdd { Name = "My Model", Owner = "" }; 
+            var modelAdd = new Model { Name = "My Model", Owner = "" }; 
             request.AddJsonBody(modelAdd);
 
+            //Act
             var response = await _client.ExecutePostAsync(request);
 
+            //Assert
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.UnprocessableEntity), $"The API incorrectly accepted a model with empty owner.  {response.Content}");
         }
 
-        // 7. Delete Model Version Using Saved Version ID
         [Test, Order(7)]
-        public async Task DeleteModelVersion_ShouldReturnSuccessUsingSavedIds()
+        public async Task Versions_DELETE_ShouldReturnSuccess()
         {
-            Assert.Multiple(() =>
-            {
-                // Ensure _modelId and _versionId are not null
-                Assert.That(_modelId, Is.Not.Null.And.Not.Empty, "Model ID is null or empty. Ensure that AddModel test runs first.");
-                Assert.That(_versionId, Is.Not.Null.And.Not.Empty, "Version ID is null or empty. Ensure that AddModelVersion test runs first.");
-            });
-
+            //Arrange
             var request = new RestRequest($"/models/{_modelId}/versions/{_versionId}");
 
+            //Act
             var response = await _client.ExecuteDeleteAsync(request);
 
+            //Assert
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), response.ErrorMessage);
         }
 
-        // 8. Delete Model Using Saved ID
         [Test, Order(8)]
-        public async Task DeleteModel_ShouldReturnSuccessUsingSavedId()
+        public async Task Model_Delete_ShouldReturnSuccess()
         {
-            // Ensure _modelId is not null
-            Assert.That(_modelId, Is.Not.Null.And.Not.Empty, "Model ID is null or empty. Ensure that AddModel test runs first.");
-
+            //Arrange
             var request = new RestRequest($"/models/{_modelId}");
 
+            //Act
             var response = await _client.ExecuteDeleteAsync(request);
 
+            //Assert
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), response.ErrorMessage);
         }
 

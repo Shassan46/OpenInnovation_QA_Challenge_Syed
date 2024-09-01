@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace OpenInnovation_QA_Challenge.Models
+﻿namespace OpenInnovation_QA_Challenge.Models
 {
     internal class InferenceArguments
     {
-        public string Text { get; set; }
+        public string? Text { get; set; }
         public bool ApplyTemplate { get; set; } = false;
         public int MaxNewTokens { get; set; } = 256;
         public bool DoSample { get; set; } = true;
