@@ -71,13 +71,15 @@ jobs:
         name: 'Test Results'
         path: '**/*.trx' 
         reporter: dotnet-trx      
-
+        
     - name: Stop and remove Docker container
+      if: always() 
       run: |
         cd recruiting-qa-challenge
         docker-compose -f docker-compose.yml down
 
     - name: Cleanup Docker to free up space
+      if: always() 
       run: |
         docker system prune -f
         docker volume prune -f
