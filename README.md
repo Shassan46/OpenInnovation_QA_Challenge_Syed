@@ -63,7 +63,7 @@ The CI pipeline is configured using GitHub Actions and includes the following st
    - Docker Compose is installed to orchestrate the multi-container setup.
 
 6. Port Availability Check:
-   - The pipeline checks if the required port (8002) is available.
+   - The pipeline checks if the required port (8000) is available.
 
 7. Docker Compose Override File Creation:
    - An override file is created to map the correct port for the API server.
